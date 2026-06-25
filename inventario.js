@@ -2307,9 +2307,17 @@ function renderCMVPanel() {
         </div>`).join('')}
     </div>` : '';
 
-  const proj = calcProjecao();
-  const projColor = proj?.cmvProj != null
-    ? (proj.cmvProj > pct * 1.1 ? '#ef4444' : proj.cmvProj > pct ? '#f59e0b' : '#4ade80')
+  // CMV mês YTD = total gasto acumulado / total faturamento acumulado
+  let gastoYTD = 0, fatYTD = 0;
+  for (let w = 1; w <= 4; w++) {
+    const dw = (state.cmv || {})['semana_' + w];
+    if (!dw) continue;
+    gastoYTD += (dw.notas || []).reduce((s, n) => s + (n.valor || 0), 0);
+    if (dw.faturamento > 0) fatYTD += dw.faturamento;
+  }
+  const cmvYTD     = fatYTD > 0 ? gastoYTD / fatYTD * 100 : null;
+  const ytdColor   = cmvYTD != null
+    ? (cmvYTD > pct * 1.1 ? '#ef4444' : cmvYTD > pct ? '#f59e0b' : '#4ade80')
     : '#9ca3af';
 
   panel.innerHTML = `
@@ -2324,14 +2332,14 @@ function renderCMVPanel() {
       <div class="cmv-kpis-row">
         <div class="cmv-kpi-block">
           <span class="cmv-kpi-label">CMV semana</span>
-          <span class="cmv-kpi-value" style="color:${barColor}">${cmvReal !== null ? cmvReal.toFixed(1) + '%' : fat ? (total === 0 ? '0%' : '—') : '—'}</span>
+          <span class="cmv-kpi-value" style="color:${barColor}">${cmvReal !== null ? cmvReal.toFixed(1) + '%' : '—'}</span>
           <span class="cmv-kpi-sub">${fat ? `meta ${pct}% · R$ ${fmt(total)}` : IS_ADMIN ? 'configure faturamento' : 'sem faturamento'}</span>
         </div>
         <div class="cmv-kpi-divider"></div>
         <div class="cmv-kpi-block">
-          <span class="cmv-kpi-label">Projeção mês</span>
-          <span class="cmv-kpi-value" style="color:${projColor}">${proj?.cmvProj != null ? proj.cmvProj.toFixed(1) + '%' : '—'}</span>
-          <span class="cmv-kpi-sub">${proj ? `R$ ${fmt(proj.gastoProj)} de R$ ${fmt(proj.fatProj)}` : 'aguardando dados'}</span>
+          <span class="cmv-kpi-label">CMV mês</span>
+          <span class="cmv-kpi-value" style="color:${ytdColor}">${cmvYTD != null ? cmvYTD.toFixed(1) + '%' : '—'}</span>
+          <span class="cmv-kpi-sub">${fatYTD > 0 ? `R$ ${fmt(gastoYTD)} de R$ ${fmt(fatYTD)}` : 'aguardando dados'}</span>
         </div>
       </div>
 
