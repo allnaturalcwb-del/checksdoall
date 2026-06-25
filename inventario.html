@@ -114,6 +114,12 @@
         <p style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin:12px 0 8px">
           Itens encontrados — selecione o item correspondente
         </p>
+        <div style="position:relative;margin-bottom:8px">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:#9ca3af">🔍</span>
+          <input id="nfItemSearch" type="text" placeholder="Pesquisar item..."
+            style="width:100%;box-sizing:border-box;padding:8px 10px 8px 32px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;font-family:inherit"
+            oninput="renderNFItems()">
+        </div>
         <div class="nf-items-list" id="nfItemsList"></div>
         <div class="nf-total">Total incluído: <strong id="nfTotalConfirmado">R$ 0,00</strong></div>
         <button class="inv-modal-btn" onclick="confirmNFItems()">✓ Confirmar e Salvar</button>
@@ -204,6 +210,35 @@
         <button class="inv-modal-btn" style="flex:1" onclick="saveGeminiKey()">Salvar Chave</button>
       </div>
       <button class="inv-modal-cancel" onclick="closeGeminiKeyModal()" style="margin-top:8px">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- Modal: Cadastrar insumo a partir de NF -->
+  <div class="inv-overlay" id="invNFAddItemOverlay">
+    <div class="inv-modal">
+      <h2>Cadastrar Insumo</h2>
+      <input type="hidden" id="nfAddItemId">
+      <div class="nota-field">
+        <label>Nome do insumo</label>
+        <input id="nfAddItemName" type="text" placeholder="Nome" autocomplete="off"
+               style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:15px">
+      </div>
+      <div class="nota-field" style="margin-top:10px">
+        <label>Seção</label>
+        <select id="nfAddItemSection" class="inv-select-linha" onchange="updateNFAddGroups()"></select>
+      </div>
+      <div class="nota-field" style="margin-top:10px">
+        <label>Grupo</label>
+        <select id="nfAddItemGroup" class="inv-select-linha"></select>
+      </div>
+      <div class="nota-field" style="margin-top:10px">
+        <label>Unidade</label>
+        <input id="nfAddItemUnit" type="text" placeholder="un, kg, lt, cx..." autocomplete="off"
+               style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:15px"
+               onkeydown="if(event.key==='Enter')saveNFAddItem()">
+      </div>
+      <button class="inv-modal-btn" style="margin-top:14px" onclick="saveNFAddItem()">Salvar e Vincular</button>
+      <button class="inv-modal-cancel" onclick="closeNFAddItem()">Cancelar</button>
     </div>
   </div>
 
