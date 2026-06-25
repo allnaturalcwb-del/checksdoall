@@ -361,9 +361,7 @@
 
     async function render() {
       const allData = await Promise.all(UNITS.map(u => loadUnit(u).then(d => ({ unit: u, data: d }))));
-
-      document.getElementById('summaryBlock').innerHTML = summaryCard(allData);
-      document.getElementById('unitsBlock').innerHTML   = allData.map(({ unit, data }) => unitCard(unit, data)).join('');
+      document.getElementById('unitsBlock').innerHTML = allData.map(({ unit, data }) => unitCard(unit, data)).join('');
     }
 
     document.addEventListener('DOMContentLoaded', render);
