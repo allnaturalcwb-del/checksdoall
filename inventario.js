@@ -1903,7 +1903,8 @@ function renderNFItems() {
     return `<div class="nf-item${item.incluir ? '' : ' nf-item-off'}" id="nfitem_${item.id}">
       <input class="nf-item-chk" type="checkbox" ${item.incluir ? 'checked' : ''} onchange="toggleNFItem(${item.id},this.checked)">
       <div class="nf-item-body">
-        <div class="nf-item-desc">${escHtml(item.descricao)}</div>
+        <input class="nf-item-desc-input" type="text" value="${escHtml(item.descricao)}"
+          onchange="updateNFItemVal(${item.id},'descricao',this.value)">
         <div class="nf-item-meta-edit">
           <label class="nf-meta-lbl">Qtd</label>
           <input class="nf-meta-input" type="number" inputmode="decimal" value="${item.quantidade}"
@@ -1933,7 +1934,7 @@ function renderNFItems() {
 function updateNFItemVal(id, field, rawVal) {
   const item = nfExtractedItems.find(i => i.id === id);
   if (!item) return;
-  const val = field === 'unidade' ? rawVal : (parseFloat(rawVal) || 0);
+  const val = (field === 'unidade' || field === 'descricao') ? rawVal : (parseFloat(rawVal) || 0);
   item[field] = val;
   if (field === 'quantidade' || field === 'preco_unitario') {
     item.preco_total = +(item.quantidade * item.preco_unitario).toFixed(2);
