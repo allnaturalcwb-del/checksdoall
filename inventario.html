@@ -176,6 +176,32 @@
     </div>
   </div>
 
+  <!-- Modal: Trocar PIN (admin) -->
+  <div class="inv-overlay" id="invTrocarPinOverlay">
+    <div class="inv-modal">
+      <h2>Trocar meu PIN</h2>
+      <p style="font-size:13px;color:#666;margin-bottom:16px">Defina seu nome e PIN pessoal</p>
+      <div class="nota-field">
+        <label>Seu nome</label>
+        <input id="tpNome" type="text" placeholder="Ex: Bruna" autocomplete="off"
+               style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:15px"
+               onkeydown="if(event.key==='Enter')document.getElementById('tpPin1').focus()">
+      </div>
+      <div class="nota-field" style="margin-top:10px">
+        <label>Novo PIN (4 dígitos)</label>
+        <input class="inv-pin-input" id="tpPin1" type="password" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off">
+      </div>
+      <div class="nota-field" style="margin-top:10px">
+        <label>Confirmar PIN</label>
+        <input class="inv-pin-input" id="tpPin2" type="password" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off"
+               onkeydown="if(event.key==='Enter')saveTrocarPin()">
+      </div>
+      <p id="tpError" style="color:#e11d48;font-size:12px;min-height:18px;margin-top:6px"></p>
+      <button class="inv-modal-btn" onclick="saveTrocarPin()">Salvar</button>
+      <button class="inv-modal-cancel" onclick="closeTrocarPin()">Cancelar</button>
+    </div>
+  </div>
+
   <script src="inventario.js"></script>
 </body>
 </html>
