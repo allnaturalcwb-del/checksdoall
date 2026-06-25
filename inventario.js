@@ -1385,6 +1385,59 @@ function saveNota() {
   renderCMVPanel();
 }
 
+function openEditNota(id) {
+  const d = getCMVData();
+  const nota = (d.notas || []).find(n => n.id === id);
+  if (!nota) return;
+
+  document.getElementById('editNotaId').value = id;
+  document.getElementById('editNotaFornecedor').value = nota.fornecedor || '';
+  document.getElementById('editNotaValor').value = nota.valor || '';
+
+  // Data: converte DD/MM/YYYY → YYYY-MM-DD para o input date
+  if (nota.data) {
+    const p = nota.data.split('/');
+    document.getElementById('editNotaData').value = p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : '';
+  } else {
+    document.getElementById('editNotaData').value = '';
+  }
+
+  populateLinhaSelect('editNotaLinha');
+  document.getElementById('editNotaLinha').value = nota.linha || '';
+
+  document.getElementById('invEditNotaOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('editNotaFornecedor').focus(), 100);
+}
+
+function saveEditNota() {
+  const id         = document.getElementById('editNotaId').value;
+  const fornecedor = document.getElementById('editNotaFornecedor').value.trim();
+  const valor      = parseFloat(document.getElementById('editNotaValor').value);
+  const data       = document.getElementById('editNotaData').value;
+  const linha      = document.getElementById('editNotaLinha').value;
+
+  if (!fornecedor || isNaN(valor) || valor <= 0) return;
+
+  const d = getCMVData();
+  const nota = (d.notas || []).find(n => n.id === id);
+  if (!nota) return;
+
+  nota.fornecedor = fornecedor;
+  nota.valor      = valor;
+  nota.linha      = linha;
+  nota.data       = data ? new Date(data).toLocaleDateString('pt-BR') : nota.data;
+
+  learnFornecedorLinha(fornecedor, linha);
+  closeEditNota();
+  doSave();
+  renderCMVPanel();
+  showToast('Nota atualizada ✓');
+}
+
+function closeEditNota() {
+  document.getElementById('invEditNotaOverlay').classList.remove('open');
+}
+
 function deleteNota(id) {
   if (!confirm('Remover esta nota?')) return;
   const d = getCMVData();
@@ -2215,6 +2268,7 @@ function renderCMVPanel() {
           </div>
           <span class="cmv-panel-nota-data">${n.data || ''}</span>
           <span class="cmv-panel-nota-val">R$ ${fmt(n.valor)}</span>
+          <button class="cmv-nota-edit" onclick="openEditNota('${n.id}')" title="Editar">✏️</button>
           <button class="cmv-nota-del" onclick="deleteNota('${n.id}')">✕</button>
         </div>`).join('')
     : `<p class="cmv-panel-notas-vazio">Nenhuma nota inserida nesta semana</p>`;
