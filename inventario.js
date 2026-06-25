@@ -2228,6 +2228,27 @@ function calcMonthlyAvg() {
   return count > 0 ? { avg: sum / count, weeks: count } : null;
 }
 
+function calcProjecao() {
+  // Acumula todas as semanas com dados
+  let gastoTotal = 0, fatTotal = 0, semCount = 0;
+  for (let w = 1; w <= 4; w++) {
+    const d = (state.cmv || {})['semana_' + w];
+    if (!d) continue;
+    const gasto = (d.notas || []).reduce((s, n) => s + (n.valor || 0), 0);
+    if (gasto > 0 || (d.faturamento && d.faturamento > 0)) {
+      gastoTotal += gasto;
+      if (d.faturamento > 0) fatTotal += d.faturamento;
+      semCount++;
+    }
+  }
+  if (semCount === 0) return null;
+  // Projeta para 4 semanas
+  const gastoProj = gastoTotal / semCount * 4;
+  const fatProj   = fatTotal   / semCount * 4;
+  const cmvProj   = fatProj > 0 ? gastoProj / fatProj * 100 : null;
+  return { gastoProj, fatProj, cmvProj, semCount };
+}
+
 function renderCMVPanel() {
   const panel = document.getElementById('cmvPanel');
   if (!panel) return;
@@ -2286,17 +2307,35 @@ function renderCMVPanel() {
         </div>`).join('')}
     </div>` : '';
 
+  const proj = calcProjecao();
+  const projColor = proj?.cmvProj != null
+    ? (proj.cmvProj > pct * 1.1 ? '#ef4444' : proj.cmvProj > pct ? '#f59e0b' : '#4ade80')
+    : '#9ca3af';
+
   panel.innerHTML = `
     <div class="cmv-panel-header">
       <div class="cmv-panel-title-row">
-        <span class="cmv-panel-week-label">CMV — Semana ${state.semana}</span>
-        ${cmvReal !== null ? `<span class="cmv-panel-cmvpct" style="color:${barColor}">${cmvReal.toFixed(1)}%</span>` : ''}
-        ${monthly ? `<span class="cmv-panel-media-badge">Mês: ${monthly.avg.toFixed(1)}%</span>` : ''}
+        <span class="cmv-panel-week-label">Sem ${state.semana}</span>
+        <div style="flex:1"></div>
+        ${actionBtns.replace('<div class="cmv-panel-actions">', '<div class="cmv-panel-actions" style="margin-top:0">')}
       </div>
-      ${actionBtns}
-    </div>
 
-    ${fat ? `
+      <!-- Dois KPIs grandes -->
+      <div class="cmv-kpis-row">
+        <div class="cmv-kpi-block">
+          <span class="cmv-kpi-label">CMV semana</span>
+          <span class="cmv-kpi-value" style="color:${barColor}">${cmvReal !== null ? cmvReal.toFixed(1) + '%' : fat ? (total === 0 ? '0%' : '—') : '—'}</span>
+          <span class="cmv-kpi-sub">${fat ? `meta ${pct}% · R$ ${fmt(total)}` : IS_ADMIN ? 'configure faturamento' : 'sem faturamento'}</span>
+        </div>
+        <div class="cmv-kpi-divider"></div>
+        <div class="cmv-kpi-block">
+          <span class="cmv-kpi-label">Projeção mês</span>
+          <span class="cmv-kpi-value" style="color:${projColor}">${proj?.cmvProj != null ? proj.cmvProj.toFixed(1) + '%' : '—'}</span>
+          <span class="cmv-kpi-sub">${proj ? `R$ ${fmt(proj.gastoProj)} de R$ ${fmt(proj.fatProj)}` : 'aguardando dados'}</span>
+        </div>
+      </div>
+
+      ${fat ? `
       <div class="cmv-panel-bar-wrap">
         <div class="cmv-panel-bar-bg">
           <div class="cmv-panel-bar-fill" style="width:${progPct.toFixed(1)}%;background:${barColor}"></div>
@@ -2321,12 +2360,7 @@ function renderCMVPanel() {
           <span class="cmv-panel-metric-val">R$ ${fmt(fat)}</span>
         </div>
       </div>
-    ` : `
-      <div class="cmv-panel-uncfg">
-        ${IS_ADMIN ? `<span>Configure o faturamento para ver o CMV desta semana</span>` : `<span>CMV ainda não configurado para esta semana</span>`}
-        ${monthly ? `<span class="cmv-panel-media-inline"> · Média mês: <strong>${monthly.avg.toFixed(1)}%</strong> (${monthly.weeks} sem.)</span>` : ''}
-      </div>
-    `}
+      ` : ''}
 
     ${linhaBreakdownHtml}
 
