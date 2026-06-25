@@ -1263,6 +1263,21 @@ body {
 }
 .nf-item-select:focus { outline: none; border-color: var(--red); }
 
+.nf-item-desc-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text);
+  background: #fafafa;
+  margin-bottom: 2px;
+}
+.nf-item-desc-input:focus { outline: none; border-color: var(--red); background: #fff; }
+
 .nf-item-meta-edit {
   display: flex;
   align-items: center;
