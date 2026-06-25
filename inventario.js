@@ -1904,7 +1904,19 @@ function renderNFItems() {
       <input class="nf-item-chk" type="checkbox" ${item.incluir ? 'checked' : ''} onchange="toggleNFItem(${item.id},this.checked)">
       <div class="nf-item-body">
         <div class="nf-item-desc">${escHtml(item.descricao)}</div>
-        <div class="nf-item-meta">Qtd: ${item.quantidade} ${item.unidade} · R$&nbsp;${fmt(item.preco_unitario)}/un · Total: R$&nbsp;${fmt(item.preco_total)}</div>
+        <div class="nf-item-meta-edit">
+          <label class="nf-meta-lbl">Qtd</label>
+          <input class="nf-meta-input" type="number" inputmode="decimal" value="${item.quantidade}"
+            onchange="updateNFItemVal(${item.id},'quantidade',this.value)">
+          <input class="nf-meta-input nf-meta-unit" type="text" value="${escHtml(item.unidade)}"
+            onchange="updateNFItemVal(${item.id},'unidade',this.value)">
+          <label class="nf-meta-lbl">R$/un</label>
+          <input class="nf-meta-input" type="number" inputmode="decimal" value="${item.preco_unitario}"
+            onchange="updateNFItemVal(${item.id},'preco_unitario',this.value)">
+          <label class="nf-meta-lbl">Total</label>
+          <input class="nf-meta-input nf-meta-total" id="nftotal_${item.id}" type="number" inputmode="decimal" value="${item.preco_total}"
+            onchange="updateNFItemVal(${item.id},'preco_total',this.value)">
+        </div>
         <span class="nf-match-badge ${matchBadge}">${matchLabel}</span>
         <select class="nf-item-select" onchange="changeNFMatch(${item.id},this.value)">${opts}</select>
         <button class="nf-cadastrar-btn" id="nfcad_${item.id}" style="display:${showCadastrar ? 'flex' : 'none'}"
@@ -1915,6 +1927,22 @@ function renderNFItems() {
     </div>`;
   }).join('') || '<p style="color:#999;text-align:center;padding:16px">Nenhum item encontrado</p>';
 
+  updateNFTotal();
+}
+
+function updateNFItemVal(id, field, rawVal) {
+  const item = nfExtractedItems.find(i => i.id === id);
+  if (!item) return;
+  const val = field === 'unidade' ? rawVal : (parseFloat(rawVal) || 0);
+  item[field] = val;
+  if (field === 'quantidade' || field === 'preco_unitario') {
+    item.preco_total = +(item.quantidade * item.preco_unitario).toFixed(2);
+    const totalEl = document.getElementById('nftotal_' + id);
+    if (totalEl) totalEl.value = item.preco_total;
+  } else if (field === 'preco_total') {
+    if (item.quantidade > 0)
+      item.preco_unitario = +(item.preco_total / item.quantidade).toFixed(4);
+  }
   updateNFTotal();
 }
 
