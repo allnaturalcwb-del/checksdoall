@@ -1750,7 +1750,7 @@ async function callGemini(base64Data, mimeType, attempt = 1) {
 Se não conseguir ler algum campo, use null. Retorne APENAS o JSON, sem texto adicional.`;
 
   const key = getGeminiKey();
-  const body = JSON.stringify({
+  const reqBody = JSON.stringify({
     contents: [{ parts: [
       { inline_data: { mime_type: mimeType, data: base64Data } },
       { text: prompt }
@@ -1758,16 +1758,18 @@ Se não conseguir ler algum campo, use null. Retorne APENAS o JSON, sem texto ad
     generationConfig: { temperature: 0.1 }
   });
 
-  // Tenta x-goog-api-key; se 401, tenta Bearer
-  let resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body }
-  );
+  const BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
+
+  // Tenta 3 formas de autenticação em sequência
+  let resp = await fetch(BASE,
+    { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: reqBody });
   if (resp.status === 401) {
-    resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` }, body }
-    );
+    resp = await fetch(`${BASE}?key=${encodeURIComponent(key)}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: reqBody });
+  }
+  if (resp.status === 401) {
+    resp = await fetch(BASE,
+      { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` }, body: reqBody });
   }
 
   if (!resp.ok) {
