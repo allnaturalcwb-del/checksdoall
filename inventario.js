@@ -1737,7 +1737,7 @@ async function countdownWait(seconds) {
 }
 
 async function callGemini(base64Data, mimeType, attempt = 1) {
-  const MAX_ATTEMPTS = 4;
+  const MAX_ATTEMPTS = 8;
   const prompt = `Você está lendo uma nota fiscal ou cupom fiscal brasileiro. Extraia os dados e retorne APENAS um JSON válido (sem markdown, sem explicação):
 {
   "fornecedor": "nome da empresa emitente",
@@ -1758,7 +1758,7 @@ Se não conseguir ler algum campo, use null. Retorne APENAS o JSON, sem texto ad
     generationConfig: { temperature: 0.1 }
   });
 
-  const BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+  const BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
 
   // Tenta 3 formas de autenticação em sequência
   let resp = await fetch(BASE,
@@ -1781,11 +1781,10 @@ Se não conseguir ler algum campo, use null. Retorne APENAS o JSON, sem texto ad
         return callGemini(base64Data, mimeType, attempt + 1);
       }
       if (resp.status === 503) {
-        // Serviço indisponível: backoff menor
-        const delay = 5000 * attempt;
-        setNFLoadingMsg(`Serviço ocupado, aguardando ${delay/1000}s... (tentativa ${attempt}/${MAX_ATTEMPTS - 1})`);
+        const delay = Math.min(5000 * attempt, 30000);
+        setNFLoadingMsg(`Serviço ocupado — tentativa ${attempt}/${MAX_ATTEMPTS - 1}, aguardando ${delay/1000}s...`);
         await new Promise(r => setTimeout(r, delay));
-        setNFLoadingMsg('Lendo a nota com IA...');
+        setNFLoadingMsg('Tentando novamente...');
         return callGemini(base64Data, mimeType, attempt + 1);
       }
     }
@@ -2253,7 +2252,7 @@ async function testGeminiKey() {
   btn.textContent = '⏳ Testando...';
   btn.disabled = true;
 
-  const BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+  const BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
   const body = JSON.stringify({ contents:[{ parts:[{ text:'Responda apenas: OK' }] }] });
 
   let resp, label;
