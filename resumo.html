@@ -4,32 +4,129 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Painel Geral — Estoque</title>
+  <title>Franqueadora — Controles All</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="inventario.css">
+  <style>
+    .resumo-header-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px 10px;
+      background: #1e293b; color: #fff;
+    }
+    .resumo-logo { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+    .resumo-logo span { color: #4ade80; }
+    .resumo-logout { background: rgba(255,255,255,.1); border: none; color: #fff;
+      font-size: 13px; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+
+    .resumo-week-bar {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+      overflow-x: auto;
+    }
+    .resumo-week-label { font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap; }
+    .resumo-week-btn {
+      background: #e2e8f0; border: none; color: #475569;
+      font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 16px;
+      cursor: pointer; white-space: nowrap;
+    }
+    .resumo-week-btn.active { background: #1e293b; color: #fff; }
+
+    .resumo-main { padding: 14px 12px; }
+    .resumo-section-title {
+      font-size: 11px; font-weight: 700; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px;
+    }
+
+    .resumo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    .resumo-card {
+      background: #fff; border-radius: 12px;
+      border: 1px solid #e2e8f0; overflow: hidden;
+    }
+    .resumo-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px 8px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .resumo-card-nome { font-size: 15px; font-weight: 700; color: #1e293b; }
+    .resumo-card-link {
+      font-size: 12px; color: #3b82f6; text-decoration: none; font-weight: 600;
+    }
+
+    /* CMV mensal destaque */
+    .resumo-cmv-avg {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px;
+      background: #f8fafc; border-bottom: 1px solid #f1f5f9;
+    }
+    .resumo-cmv-avg-label { font-size: 11px; font-weight: 600; color: #64748b; }
+    .resumo-cmv-avg-val { font-size: 18px; font-weight: 700; }
+    .resumo-cmv-avg-sub { font-size: 10px; color: #94a3b8; }
+
+    /* Barra semana atual */
+    .resumo-card-body { padding: 10px 14px 4px; }
+    .resumo-week-title { font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 6px; }
+    .resumo-bar-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .resumo-bar-bg { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .resumo-bar-fill { height: 100%; border-radius: 4px; transition: width .4s; }
+    .resumo-bar-pct { font-size: 12px; font-weight: 700; min-width: 36px; text-align: right; }
+
+    .resumo-stats {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 4px; margin-bottom: 8px;
+    }
+    .resumo-stat { text-align: center; }
+    .resumo-stat-label { font-size: 9px; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+    .resumo-stat-value { font-size: 12px; font-weight: 700; color: #1e293b; }
+    .resumo-stat-value.neg { color: #ef4444; }
+
+    /* Datas */
+    .resumo-dates {
+      display: flex; gap: 6px; padding: 8px 14px 12px;
+      border-top: 1px solid #f1f5f9;
+    }
+    .resumo-date-chip {
+      flex: 1; background: #f8fafc; border-radius: 8px;
+      padding: 6px 8px; text-align: center;
+    }
+    .resumo-date-chip.alert { background: #fef2f2; }
+    .resumo-date-chip.ok   { background: #f0fdf4; }
+    .resumo-date-chip-label { font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+    .resumo-date-chip-val   { font-size: 12px; font-weight: 700; color: #1e293b; margin-top: 2px; }
+    .resumo-date-chip-val.old { color: #ef4444; }
+    .resumo-date-chip-val.ok  { color: #16a34a; }
+    .resumo-date-chip-sub { font-size: 9px; color: #94a3b8; }
+
+    .resumo-vazio { padding: 16px 14px; color: #94a3b8; font-size: 13px; }
+
+    @media (max-width: 480px) {
+      .resumo-stats { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
 </head>
 <body>
-  <header class="inv-header">
-    <div class="inv-header-top">
-      <div class="inv-logo">ESTOQUE <span>●</span> <span class="inv-unit-badge">Painel Geral</span></div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <span id="cloudStatus" style="font-size:16px;color:#4ade80">☁</span>
-        <button class="inv-logout-btn-hdr" onclick="logout()">Sair</button>
-      </div>
-    </div>
-  </header>
 
-  <div class="inv-week-bar">
-    <span class="inv-week-label">Semana:</span>
-    <button class="inv-week-btn active" data-week="1" onclick="switchWeek(1)">Sem. 1</button>
-    <button class="inv-week-btn" data-week="2" onclick="switchWeek(2)">Sem. 2</button>
-    <button class="inv-week-btn" data-week="3" onclick="switchWeek(3)">Sem. 3</button>
-    <button class="inv-week-btn" data-week="4" onclick="switchWeek(4)">Sem. 4</button>
+  <div class="resumo-header-top">
+    <div class="resumo-logo">CONTROLES <span>●</span> ALL &nbsp;·&nbsp; Franqueadora</div>
+    <button class="resumo-logout" onclick="logout()">Sair</button>
   </div>
 
-  <main style="padding:16px">
-    <p class="inv-section-title" style="margin-bottom:16px" id="resumoTitle">CMV — Todas as Unidades · Semana 1</p>
-    <div id="unitsGrid" class="resumo-units-grid">
+  <div class="resumo-week-bar">
+    <span class="resumo-week-label">Semana:</span>
+    <button class="resumo-week-btn active" data-week="0" onclick="switchWeek(0)">Mensal</button>
+    <button class="resumo-week-btn" data-week="1" onclick="switchWeek(1)">Sem. 1</button>
+    <button class="resumo-week-btn" data-week="2" onclick="switchWeek(2)">Sem. 2</button>
+    <button class="resumo-week-btn" data-week="3" onclick="switchWeek(3)">Sem. 3</button>
+    <button class="resumo-week-btn" data-week="4" onclick="switchWeek(4)">Sem. 4</button>
+  </div>
+
+  <main class="resumo-main">
+    <p class="resumo-section-title" id="resumoTitle">Visão mensal — todas as unidades</p>
+    <div id="unitsGrid" class="resumo-grid">
       <p style="color:#999;text-align:center;margin-top:48px;grid-column:1/-1">Carregando dados...</p>
     </div>
   </main>
@@ -39,9 +136,9 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5odW90ZHdmem93eWRyamV5dHRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MTM2NDAsImV4cCI6MjA5NTk4OTY0MH0.JovSWvkJ5OdX1tauz7sYOuyDIm1Mbcx5gJF8Zb20oe4';
     const UNITS       = ['batel','maringa','parkshopping','bigorrilho','cascavel'];
     const UNIT_LABELS = { batel:'Batel', maringa:'Maringá', parkshopping:'Park Shopping', bigorrilho:'Bigorrilho', cascavel:'Cascavel' };
-    let currentWeek   = 1;
 
-    // Verificar sessão de admin global
+    let currentWeek = 0; // 0 = mensal
+
     let session = null;
     try { session = JSON.parse(sessionStorage.getItem('inv_session') || 'null'); } catch(e) {}
     if (!session || !session.isGlobal) { window.location.href = 'index.html'; }
@@ -50,14 +147,53 @@
 
     function switchWeek(w) {
       currentWeek = w;
-      document.querySelectorAll('.inv-week-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.week) === w));
-      document.getElementById('resumoTitle').textContent = `CMV — Todas as Unidades · Semana ${w}`;
+      document.querySelectorAll('.resumo-week-btn').forEach(b =>
+        b.classList.toggle('active', parseInt(b.dataset.week) === w));
+      document.getElementById('resumoTitle').textContent =
+        w === 0 ? 'Visão mensal — todas as unidades' : `Semana ${w} — todas as unidades`;
       renderAll();
     }
 
-    function fmt(n) {
+    function fmtR(n) {
       if (n == null) return '—';
-      return Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return 'R$ ' + Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return null;
+      const d = new Date(iso);
+      if (isNaN(d)) return null;
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    }
+
+    function daysSince(iso) {
+      if (!iso) return null;
+      const diff = Date.now() - new Date(iso).getTime();
+      return Math.floor(diff / 86400000);
+    }
+
+    function lastNFDate(cmv) {
+      let max = null;
+      for (let w = 1; w <= 4; w++) {
+        const notas = (cmv?.['semana_' + w]?.notas) || [];
+        for (const n of notas) {
+          if (n.data && (!max || n.data > max)) max = n.data;
+        }
+      }
+      return max; // formato YYYY-MM-DD
+    }
+
+    function monthlyAvg(cmv) {
+      let sum = 0, count = 0;
+      for (let w = 1; w <= 4; w++) {
+        const d = cmv?.['semana_' + w];
+        if (d?.faturamento > 0) {
+          const total = (d.notas || []).reduce((s, n) => s + (n.valor || 0), 0);
+          sum += (total / d.faturamento) * 100;
+          count++;
+        }
+      }
+      return count > 0 ? { avg: sum / count, weeks: count } : null;
     }
 
     async function loadUnit(unit) {
@@ -72,53 +208,111 @@
       } catch(e) { return null; }
     }
 
+    function cmvColor(pct, meta) {
+      if (pct == null) return '#94a3b8';
+      const ratio = pct / meta;
+      if (ratio >= 1)    return '#ef4444';
+      if (ratio >= 0.85) return '#f59e0b';
+      return '#22c55e';
+    }
+
+    function renderCard(unit, data) {
+      const label = UNIT_LABELS[unit];
+      const cmv   = data?.cmv || {};
+
+      // CMV mensal
+      const monthly = monthlyAvg(cmv);
+
+      // CMV semana selecionada
+      const weekKey = currentWeek > 0 ? 'semana_' + currentWeek : null;
+      const weekCmv = weekKey ? (cmv[weekKey] || {}) : null;
+      const fat     = weekCmv?.faturamento;
+      const meta    = weekCmv?.meta_pct || 30;
+      const notas   = weekCmv?.notas || [];
+      const total   = notas.reduce((s, n) => s + (n.valor || 0), 0);
+      const cmvReal = fat ? (total / fat) * 100 : null;
+      const metaVal = fat ? fat * meta / 100 : null;
+      const saldo   = metaVal !== null ? metaVal - total : null;
+      const prog    = metaVal ? Math.min(total / metaVal * 100, 100) : 0;
+      const barCol  = cmvColor(cmvReal, meta);
+
+      // Datas
+      const lastNF  = lastNFDate(cmv);
+      const lastCnt = data?.lastCountDate || null;
+      const nfDays  = daysSince(lastNF ? lastNF + 'T12:00:00' : null);
+      const cntDays = daysSince(lastCnt);
+
+      const nfClass  = nfDays == null ? '' : nfDays > 14 ? 'old' : 'ok';
+      const cntClass = cntDays == null ? '' : cntDays > 10 ? 'old' : 'ok';
+
+      // CMV mensal badge
+      let cmvAvgHtml = '';
+      if (monthly) {
+        const avgCol = cmvColor(monthly.avg, 30);
+        cmvAvgHtml = `
+          <div class="resumo-cmv-avg">
+            <div>
+              <div class="resumo-cmv-avg-label">CMV Médio Mensal</div>
+              <div class="resumo-cmv-avg-sub">${monthly.weeks} semana${monthly.weeks > 1 ? 's' : ''} com faturamento</div>
+            </div>
+            <div class="resumo-cmv-avg-val" style="color:${avgCol}">${monthly.avg.toFixed(1)}%</div>
+          </div>`;
+      }
+
+      // Semana atual
+      let weekHtml = '';
+      if (currentWeek > 0) {
+        if (fat) {
+          weekHtml = `
+            <div class="resumo-card-body">
+              <div class="resumo-week-title">Sem. ${currentWeek} &nbsp;·&nbsp; ${notas.length} nota${notas.length !== 1 ? 's' : ''} &nbsp;·&nbsp; Fat. ${fmtR(fat)}</div>
+              <div class="resumo-bar-wrap">
+                <div class="resumo-bar-bg"><div class="resumo-bar-fill" style="width:${prog.toFixed(1)}%;background:${barCol}"></div></div>
+                <span class="resumo-bar-pct" style="color:${barCol}">${prog.toFixed(0)}%</span>
+              </div>
+              <div class="resumo-stats">
+                <div class="resumo-stat"><div class="resumo-stat-label">Gasto</div><div class="resumo-stat-value">${fmtR(total)}</div></div>
+                <div class="resumo-stat"><div class="resumo-stat-label">Meta</div><div class="resumo-stat-value">${fmtR(metaVal)}</div></div>
+                <div class="resumo-stat"><div class="resumo-stat-label">CMV Real</div><div class="resumo-stat-value" style="color:${barCol}">${cmvReal !== null ? cmvReal.toFixed(1)+'%' : '—'}</div></div>
+                <div class="resumo-stat"><div class="resumo-stat-label">Saldo</div><div class="resumo-stat-value${saldo !== null && saldo < 0 ? ' neg' : ''}">${saldo !== null ? (saldo >= 0 ? fmtR(saldo) : '−'+fmtR(Math.abs(saldo))) : '—'}</div></div>
+              </div>
+            </div>`;
+        } else {
+          weekHtml = `<div class="resumo-vazio">Sem faturamento configurado nesta semana</div>`;
+        }
+      } else if (!monthly) {
+        weekHtml = `<div class="resumo-vazio">Nenhuma semana com faturamento ainda</div>`;
+      }
+
+      return `
+        <div class="resumo-card">
+          <div class="resumo-card-header">
+            <span class="resumo-card-nome">${label}</span>
+            <a class="resumo-card-link" href="inventario.html?u=${unit}">Abrir →</a>
+          </div>
+          ${cmvAvgHtml}
+          ${weekHtml}
+          <div class="resumo-dates">
+            <div class="resumo-date-chip ${nfDays != null && nfDays > 14 ? 'alert' : nfDays != null ? 'ok' : ''}">
+              <div class="resumo-date-chip-label">Última NF</div>
+              <div class="resumo-date-chip-val ${nfClass}">${lastNF ? fmtDate(lastNF + 'T12:00:00') : '—'}</div>
+              <div class="resumo-date-chip-sub">${nfDays != null ? nfDays + ' dias atrás' : 'sem registro'}</div>
+            </div>
+            <div class="resumo-date-chip ${cntDays != null && cntDays > 10 ? 'alert' : cntDays != null ? 'ok' : ''}">
+              <div class="resumo-date-chip-label">Última Contagem</div>
+              <div class="resumo-date-chip-val ${cntClass}">${lastCnt ? fmtDate(lastCnt) : '—'}</div>
+              <div class="resumo-date-chip-sub">${cntDays != null ? cntDays + ' dias atrás' : 'sem registro'}</div>
+            </div>
+          </div>
+        </div>`;
+    }
+
     async function renderAll() {
       const grid = document.getElementById('unitsGrid');
       grid.innerHTML = '<p style="color:#999;text-align:center;margin-top:48px;grid-column:1/-1">Carregando...</p>';
-      const cloudEl = document.getElementById('cloudStatus');
-      cloudEl.textContent = '↻'; cloudEl.style.color = '#93c5fd';
 
       const results = await Promise.all(UNITS.map(u => loadUnit(u).then(d => ({ unit: u, data: d }))));
-      const weekKey = 'semana_' + currentWeek;
-      let html = '';
-
-      for (const { unit, data } of results) {
-        const cmv   = (data && data.cmv && data.cmv[weekKey]) || { faturamento: null, meta_pct: 30, notas: [] };
-        const fat   = cmv.faturamento;
-        const pct   = cmv.meta_pct || 30;
-        const notas = cmv.notas || [];
-        const total = notas.reduce((s, n) => s + (n.valor || 0), 0);
-        const meta  = fat ? fat * pct / 100 : null;
-        const saldo = meta !== null ? meta - total : null;
-        const cmvReal = fat ? (total / fat * 100) : null;
-        const prog  = meta ? Math.min(total / meta * 100, 100) : 0;
-        const barColor = prog >= 100 ? '#ef4444' : prog >= 80 ? '#f59e0b' : '#22c55e';
-
-        html += `<div class="resumo-unit-card">
-          <div class="resumo-unit-header">
-            <span class="resumo-unit-nome">${UNIT_LABELS[unit]}</span>
-            <a class="resumo-unit-link" href="inventario.html?u=${unit}">Abrir →</a>
-          </div>
-          ${fat ? `
-            <div class="resumo-unit-bar-wrap">
-              <div class="resumo-unit-bar-bg">
-                <div class="resumo-unit-bar-fill" style="width:${prog.toFixed(1)}%;background:${barColor}"></div>
-              </div>
-              <span class="resumo-unit-pct" style="color:${barColor}">${prog.toFixed(0)}%</span>
-            </div>
-            <div class="resumo-unit-stats">
-              <div><div class="resumo-stat-label">Gasto</div><div class="resumo-stat-value">R$&nbsp;${fmt(total)}</div></div>
-              <div><div class="resumo-stat-label">Meta CMV</div><div class="resumo-stat-value">R$&nbsp;${fmt(meta)}</div></div>
-              <div><div class="resumo-stat-label">CMV Real</div><div class="resumo-stat-value" style="color:${barColor}">${cmvReal !== null ? cmvReal.toFixed(1)+'%' : '—'}</div></div>
-              <div><div class="resumo-stat-label">Saldo</div><div class="resumo-stat-value${saldo !== null && saldo < 0 ? ' neg' : ''}">${saldo !== null ? (saldo >= 0 ? 'R$&nbsp;'+fmt(saldo) : '−R$&nbsp;'+fmt(Math.abs(saldo))) : '—'}</div></div>
-            </div>
-            <div class="resumo-unit-notas">${notas.length} nota${notas.length !== 1 ? 's' : ''} · Faturamento: R$&nbsp;${fmt(fat)}</div>
-          ` : `<div class="resumo-unit-vazio">Sem configuração de CMV esta semana</div>`}
-        </div>`;
-      }
-
-      grid.innerHTML = html;
-      cloudEl.textContent = '☁'; cloudEl.style.color = '#4ade80';
+      grid.innerHTML = results.map(({ unit, data }) => renderCard(unit, data)).join('');
     }
 
     document.addEventListener('DOMContentLoaded', renderAll);
