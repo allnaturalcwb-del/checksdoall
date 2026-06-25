@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Painel Geral — Estoque</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="inventario.css">
+</head>
+<body>
+  <header class="inv-header">
+    <div class="inv-header-top">
+      <div class="inv-logo">ESTOQUE <span>●</span> <span class="inv-unit-badge">Painel Geral</span></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="cloudStatus" style="font-size:16px;color:#4ade80">☁</span>
+        <button class="inv-logout-btn-hdr" onclick="logout()">Sair</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="inv-week-bar">
+    <span class="inv-week-label">Semana:</span>
+    <button class="inv-week-btn active" data-week="1" onclick="switchWeek(1)">Sem. 1</button>
+    <button class="inv-week-btn" data-week="2" onclick="switchWeek(2)">Sem. 2</button>
+    <button class="inv-week-btn" data-week="3" onclick="switchWeek(3)">Sem. 3</button>
+    <button class="inv-week-btn" data-week="4" onclick="switchWeek(4)">Sem. 4</button>
+  </div>
+
+  <main style="padding:16px">
+    <p class="inv-section-title" style="margin-bottom:16px" id="resumoTitle">CMV — Todas as Unidades · Semana 1</p>
+    <div id="unitsGrid" class="resumo-units-grid">
+      <p style="color:#999;text-align:center;margin-top:48px;grid-column:1/-1">Carregando dados...</p>
+    </div>
+  </main>
+
+  <script>
+    const SUPABASE_URL = 'https://nhuotdwfzowydrjeyttc.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5odW90ZHdmem93eWRyamV5dHRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MTM2NDAsImV4cCI6MjA5NTk4OTY0MH0.JovSWvkJ5OdX1tauz7sYOuyDIm1Mbcx5gJF8Zb20oe4';
+    const UNITS       = ['batel','maringa','parkshopping','bigorrilho','cascavel'];
+    const UNIT_LABELS = { batel:'Batel', maringa:'Maringá', parkshopping:'Park Shopping', bigorrilho:'Bigorrilho', cascavel:'Cascavel' };
+    let currentWeek   = 1;
+
+    // Verificar sessão de admin global
+    let session = null;
+    try { session = JSON.parse(sessionStorage.getItem('inv_session') || 'null'); } catch(e) {}
+    if (!session || !session.isGlobal) { window.location.href = 'index.html'; }
+
+    function logout() { sessionStorage.removeItem('inv_session'); window.location.href = 'index.html'; }
+
+    function switchWeek(w) {
+      currentWeek = w;
+      document.querySelectorAll('.inv-week-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.week) === w));
+      document.getElementById('resumoTitle').textContent = `CMV — Todas as Unidades · Semana ${w}`;
+      renderAll();
+    }
+
+    function fmt(n) {
+      if (n == null) return '—';
+      return Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    async function loadUnit(unit) {
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/inventario_dados?chave=eq.dados_${unit}&select=estado`,
+          { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+        );
+        if (!res.ok) return null;
+        const rows = await res.json();
+        return rows.length ? rows[0].estado : null;
+      } catch(e) { return null; }
+    }
+
+    async function renderAll() {
+      const grid = document.getElementById('unitsGrid');
+      grid.innerHTML = '<p style="color:#999;text-align:center;margin-top:48px;grid-column:1/-1">Carregando...</p>';
+      const cloudEl = document.getElementById('cloudStatus');
+      cloudEl.textContent = '↻'; cloudEl.style.color = '#93c5fd';
+
+      const results = await Promise.all(UNITS.map(u => loadUnit(u).then(d => ({ unit: u, data: d }))));
+      const weekKey = 'semana_' + currentWeek;
+      let html = '';
+
+      for (const { unit, data } of results) {
+        const cmv   = (data && data.cmv && data.cmv[weekKey]) || { faturamento: null, meta_pct: 30, notas: [] };
+        const fat   = cmv.faturamento;
+        const pct   = cmv.meta_pct || 30;
+        const notas = cmv.notas || [];
+        const total = notas.reduce((s, n) => s + (n.valor || 0), 0);
+        const meta  = fat ? fat * pct / 100 : null;
+        const saldo = meta !== null ? meta - total : null;
+        const cmvReal = fat ? (total / fat * 100) : null;
+        const prog  = meta ? Math.min(total / meta * 100, 100) : 0;
+        const barColor = prog >= 100 ? '#ef4444' : prog >= 80 ? '#f59e0b' : '#22c55e';
+
+        html += `<div class="resumo-unit-card">
+          <div class="resumo-unit-header">
+            <span class="resumo-unit-nome">${UNIT_LABELS[unit]}</span>
+            <a class="resumo-unit-link" href="inventario.html?u=${unit}">Abrir →</a>
+          </div>
+          ${fat ? `
+            <div class="resumo-unit-bar-wrap">
+              <div class="resumo-unit-bar-bg">
+                <div class="resumo-unit-bar-fill" style="width:${prog.toFixed(1)}%;background:${barColor}"></div>
+              </div>
+              <span class="resumo-unit-pct" style="color:${barColor}">${prog.toFixed(0)}%</span>
+            </div>
+            <div class="resumo-unit-stats">
+              <div><div class="resumo-stat-label">Gasto</div><div class="resumo-stat-value">R$&nbsp;${fmt(total)}</div></div>
+              <div><div class="resumo-stat-label">Meta CMV</div><div class="resumo-stat-value">R$&nbsp;${fmt(meta)}</div></div>
+              <div><div class="resumo-stat-label">CMV Real</div><div class="resumo-stat-value" style="color:${barColor}">${cmvReal !== null ? cmvReal.toFixed(1)+'%' : '—'}</div></div>
+              <div><div class="resumo-stat-label">Saldo</div><div class="resumo-stat-value${saldo !== null && saldo < 0 ? ' neg' : ''}">${saldo !== null ? (saldo >= 0 ? 'R$&nbsp;'+fmt(saldo) : '−R$&nbsp;'+fmt(Math.abs(saldo))) : '—'}</div></div>
+            </div>
+            <div class="resumo-unit-notas">${notas.length} nota${notas.length !== 1 ? 's' : ''} · Faturamento: R$&nbsp;${fmt(fat)}</div>
+          ` : `<div class="resumo-unit-vazio">Sem configuração de CMV esta semana</div>`}
+        </div>`;
+      }
+
+      grid.innerHTML = html;
+      cloudEl.textContent = '☁'; cloudEl.style.color = '#4ade80';
+    }
+
+    document.addEventListener('DOMContentLoaded', renderAll);
+  </script>
+</body>
+</html>
