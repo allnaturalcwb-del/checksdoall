@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Controles Estoque</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="inventario.css">
+</head>
+<body>
+
+  <!-- Header sticky: título + CMV + semanas + tabs -->
+  <header class="inv-header">
+    <div class="inv-header-top">
+      <div class="inv-logo">CONTROLES <span>●</span> <span class="inv-unit-badge" id="invUnitName"></span></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="invCloudStatus" title="Status da nuvem" style="font-size:16px;cursor:default">◌</span>
+        <div class="inv-saved" id="invSaved">—</div>
+        <button id="invLogoutBtn" class="inv-logout-btn-hdr" style="display:none" onclick="logout()">Sair</button>
+      </div>
+    </div>
+
+    <!-- Painel CMV (sempre visível, dentro do header) -->
+    <div id="cmvPanel" class="cmv-top-panel"></div>
+
+    <!-- Seletor de semana (dentro do header) -->
+    <div class="inv-week-bar-inner">
+      <button class="inv-week-btn active" data-week="1" onclick="switchWeek(1)">Sem. 1</button>
+      <button class="inv-week-btn" data-week="2" onclick="switchWeek(2)">Sem. 2</button>
+      <button class="inv-week-btn" data-week="3" onclick="switchWeek(3)">Sem. 3</button>
+      <button class="inv-week-btn" data-week="4" onclick="switchWeek(4)">Sem. 4</button>
+    </div>
+
+    <nav class="inv-tabs" id="invTabs">
+      <!-- tabs injected by JS -->
+    </nav>
+  </header>
+
+  <!-- Modal: Configurar CMV (admin, PIN protegido) -->
+  <div class="inv-overlay" id="invCMVConfigOverlay">
+    <div class="inv-modal">
+      <h2>Configurar CMV</h2>
+      <p id="cmvConfigSemRef" style="font-weight:600;color:#444;margin-bottom:16px">—</p>
+      <div class="nota-field">
+        <label>Faturamento</label>
+        <div class="cmv-input-wrap">
+          <span class="cmv-prefix">R$</span>
+          <input type="number" inputmode="decimal" id="cmvFaturamento" placeholder="0,00" oninput="onCMVConfigChange()">
+        </div>
+      </div>
+      <div class="nota-field">
+        <label>Meta CMV (%)</label>
+        <div class="cmv-input-wrap">
+          <input type="number" inputmode="decimal" id="cmvMetaPct" placeholder="30" min="1" max="100" oninput="onCMVConfigChange()">
+          <span class="cmv-suffix">%</span>
+        </div>
+      </div>
+      <div id="cmvConfigResult" class="cmv-meta-result" style="margin-bottom:16px"></div>
+      <button class="inv-modal-btn" onclick="closeCMVConfig()">Salvar e Fechar</button>
+    </div>
+  </div>
+
+  <!-- Sections -->
+  <main class="inv-sections" id="invSections">
+    <!-- sections injected by JS -->
+  </main>
+
+  <!-- Toast -->
+  <div class="inv-toast" id="invToast">Salvo ✓</div>
+
+  <!-- PIN Modal -->
+  <div class="inv-overlay" id="invOverlay">
+    <div class="inv-modal">
+      <h2>Área do Gestor</h2>
+      <p>Digite o PIN para acessar o resumo</p>
+      <input class="inv-pin-input" id="invPin" type="password"
+             inputmode="numeric" maxlength="4" autocomplete="off"
+             onkeydown="if(event.key==='Enter')checkPin()">
+      <button class="inv-modal-btn" onclick="checkPin()">Entrar</button>
+      <button class="inv-modal-cancel" onclick="closePin()">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- Input oculto para câmera/foto de NF -->
+  <input type="file" accept="image/*" capture="environment" id="nfCamera"
+         style="display:none" onchange="handleNFPhoto(this)">
+
+  <!-- Modal: Revisão de NF lida por foto -->
+  <div class="inv-overlay" id="invNFReviewOverlay">
+    <div class="inv-modal nf-review-modal">
+      <h2>Leitura de Nota Fiscal</h2>
+      <div id="nfReviewLoading" style="text-align:center;padding:24px 0">
+        <div class="nf-spinner"></div>
+        <p style="margin-top:14px;color:#666;font-size:13px">Lendo a nota com IA...</p>
+      </div>
+      <div id="nfReviewContent" style="display:none">
+        <div class="nota-field">
+          <label>Fornecedor</label>
+          <input id="nfRevFornecedor" type="text" placeholder="Nome do fornecedor" autocomplete="off">
+        </div>
+        <div class="nota-field">
+          <label>Data</label>
+          <input id="nfRevData" type="date">
+        </div>
+        <p style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin:12px 0 8px">
+          Itens encontrados — selecione o item correspondente
+        </p>
+        <div class="nf-items-list" id="nfItemsList"></div>
+        <div class="nf-total">Total incluído: <strong id="nfTotalConfirmado">R$ 0,00</strong></div>
+        <button class="inv-modal-btn" onclick="confirmNFItems()">✓ Confirmar e Salvar</button>
+        <button class="inv-modal-cancel" onclick="closeNFReview()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Adicionar Nota Fiscal (mantido para fallback) -->
+  <div class="inv-overlay" id="invNotaOverlay">
+    <div class="inv-modal">
+      <h2>Nota Fiscal</h2>
+      <p>Preencha os dados da nota recebida</p>
+      <div class="nota-field">
+        <label>Fornecedor</label>
+        <input id="notaFornecedor" type="text" placeholder="Nome do fornecedor"
+               autocomplete="off" onkeydown="if(event.key==='Enter')document.getElementById('notaValor').focus()">
+      </div>
+      <div class="nota-field">
+        <label>Valor (R$)</label>
+        <input id="notaValor" type="number" inputmode="decimal" placeholder="0,00" min="0" step="0.01"
+               onkeydown="if(event.key==='Enter')saveNota()">
+      </div>
+      <div class="nota-field">
+        <label>Data</label>
+        <input id="notaData" type="date">
+      </div>
+      <button class="inv-modal-btn" onclick="saveNota()">Salvar Nota</button>
+      <button class="inv-modal-cancel" onclick="closeAddNota()">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- Modal: Adicionar Item (admin) -->
+  <div class="inv-overlay" id="invAddItemOverlay">
+    <div class="inv-modal">
+      <h2>Incluir Insumo</h2>
+      <p id="addItemGroupLabel" style="font-weight:600;color:#444">Grupo: —</p>
+      <div class="nota-field">
+        <label>Nome do insumo</label>
+        <input id="addItemName" type="text" placeholder="Ex: Molho Pomodoro"
+               autocomplete="off" onkeydown="if(event.key==='Enter')document.getElementById('addItemUnit').focus()">
+      </div>
+      <div class="nota-field">
+        <label>Unidade</label>
+        <input id="addItemUnit" type="text" placeholder="un, kg, lt, cx, pct..."
+               autocomplete="off" onkeydown="if(event.key==='Enter')saveNewItem()">
+      </div>
+      <button class="inv-modal-btn" onclick="saveNewItem()">Incluir Insumo</button>
+      <button class="inv-modal-cancel" onclick="closeAddItem()">Cancelar</button>
+    </div>
+  </div>
+
+  <script src="inventario.js"></script>
+</body>
+</html>
