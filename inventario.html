@@ -219,6 +219,36 @@
     </div>
   </div>
 
+  <!-- Modal: Editar nota -->
+  <div class="inv-overlay" id="invEditNotaOverlay">
+    <div class="inv-modal">
+      <h2>Editar Nota</h2>
+      <input type="hidden" id="editNotaId">
+      <div class="nota-field">
+        <label>Fornecedor</label>
+        <input id="editNotaFornecedor" type="text" autocomplete="off"
+               style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:15px">
+      </div>
+      <div class="nota-field" style="margin-top:10px">
+        <label>Linha de produto</label>
+        <select id="editNotaLinha" class="inv-select-linha"></select>
+      </div>
+      <div class="nota-field" style="margin-top:10px">
+        <label>Valor (R$)</label>
+        <input id="editNotaValor" type="number" inputmode="decimal" step="0.01"
+               style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:15px"
+               onkeydown="if(event.key==='Enter')saveEditNota()">
+      </div>
+      <div class="nota-field" style="margin-top:10px">
+        <label>Data</label>
+        <input id="editNotaData" type="date"
+               style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:15px">
+      </div>
+      <button class="inv-modal-btn" style="margin-top:14px" onclick="saveEditNota()">Salvar</button>
+      <button class="inv-modal-cancel" onclick="closeEditNota()">Cancelar</button>
+    </div>
+  </div>
+
   <!-- Modal: Cadastrar insumo a partir de NF -->
   <div class="inv-overlay" id="invNFAddItemOverlay">
     <div class="inv-modal">
