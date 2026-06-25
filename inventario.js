@@ -1749,20 +1749,26 @@ async function callGemini(base64Data, mimeType, attempt = 1) {
 }
 Se não conseguir ler algum campo, use null. Retorne APENAS o JSON, sem texto adicional.`;
 
-  const resp = await fetch(
+  const key = getGeminiKey();
+  const body = JSON.stringify({
+    contents: [{ parts: [
+      { inline_data: { mime_type: mimeType, data: base64Data } },
+      { text: prompt }
+    ]}],
+    generationConfig: { temperature: 0.1 }
+  });
+
+  // Tenta x-goog-api-key; se 401, tenta Bearer
+  let resp = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent`,
-    {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': getGeminiKey() },
-      body:    JSON.stringify({
-        contents: [{ parts: [
-          { inline_data: { mime_type: mimeType, data: base64Data } },
-          { text: prompt }
-        ]}],
-        generationConfig: { temperature: 0.1 }
-      })
-    }
+    { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body }
   );
+  if (resp.status === 401) {
+    resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` }, body }
+    );
+  }
 
   if (!resp.ok) {
     if (attempt < MAX_ATTEMPTS) {
