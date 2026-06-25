@@ -6,8 +6,9 @@ const SUPABASE_URL = 'https://nhuotdwfzowydrjeyttc.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5odW90ZHdmem93eWRyamV5dHRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MTM2NDAsImV4cCI6MjA5NTk4OTY0MH0.JovSWvkJ5OdX1tauz7sYOuyDIm1Mbcx5gJF8Zb20oe4';
 const SUPABASE_CONFIGURED = !SUPABASE_URL.includes('COLE');
 
-// ── Gemini (leitura de NF por foto) ──────────────────────────
-const GEMINI_KEY = 'AQ.Ab8RN6Le-ikrXwQjRzgLzf5MjqpEqHUK9P5hwuAJBRjORSBQUA';
+// ── Gemini (chave armazenada localmente, nunca no código) ─────
+function getGeminiKey() { return localStorage.getItem('gemini_api_key') || ''; }
+function setGeminiKey(k) { localStorage.setItem('gemini_api_key', k.trim()); }
 
 // ── Unidade (via URL ?u=batel) ────────────────────────────────
 const UNIT_ID    = new URLSearchParams(location.search).get('u') || 'batel';
@@ -1576,6 +1577,11 @@ async function handleNFPhoto(input) {
   document.getElementById('nfReviewContent').style.display = 'none';
   document.getElementById('invNFReviewOverlay').classList.add('open');
 
+  if (!getGeminiKey()) {
+    document.getElementById('invNFReviewOverlay').classList.remove('open');
+    openGeminiKeyModal();
+    return;
+  }
   try {
     const base64 = await fileToBase64(file);
     await loadMapeamentos();
@@ -1627,7 +1633,7 @@ Se não conseguir ler algum campo, use null. Retorne APENAS o JSON, sem texto ad
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent`,
     {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': getGeminiKey() },
       body:    JSON.stringify({
         contents: [{ parts: [
           { inline_data: { mime_type: mimeType, data: base64Data } },
@@ -1868,10 +1874,14 @@ function renderCMVPanel() {
   if (progPct >= 100) barColor = '#ef4444';
   else if (progPct >= 80) barColor = '#f59e0b';
 
+  const geminiOk = !!getGeminiKey();
   const actionBtns = `
     <div class="cmv-panel-actions">
-      <button class="cmv-panel-btn-foto" onclick="openCameraForNF()">📷 Foto NF</button>
-      ${IS_ADMIN ? `<button class="cmv-panel-btn-cfg" onclick="openCMVConfig()">⚙ Configurar</button>` : ''}
+      <button class="cmv-panel-btn-foto" onclick="openCameraForNF()" title="${geminiOk ? 'Tirar foto de NF' : 'Configure a chave Gemini primeiro'}">
+        📷 Foto NF${geminiOk ? '' : ' ⚠'}
+      </button>
+      ${IS_ADMIN ? `<button class="cmv-panel-btn-cfg" onclick="openCMVConfig()">⚙ CMV</button>` : ''}
+      ${IS_ADMIN ? `<button class="cmv-panel-btn-cfg" onclick="openGeminiKeyModal()" title="Configurar chave Gemini">🔑</button>` : ''}
     </div>`;
 
   const notasHtml = notas.length
@@ -1933,6 +1943,27 @@ function renderCMVPanel() {
       <div class="cmv-panel-notas-list">${notasHtml}</div>
     </div>
   `;
+}
+
+// ── Configuração da chave Gemini (admin) ──────────────────────
+function openGeminiKeyModal() {
+  const el = document.getElementById('invGeminiKeyOverlay');
+  if (!el) return;
+  document.getElementById('geminiKeyInput').value = getGeminiKey();
+  el.classList.add('open');
+  setTimeout(() => document.getElementById('geminiKeyInput').focus(), 100);
+}
+
+function saveGeminiKey() {
+  const val = document.getElementById('geminiKeyInput').value.trim();
+  if (!val) { document.getElementById('geminiKeyInput').classList.add('error'); return; }
+  setGeminiKey(val);
+  document.getElementById('invGeminiKeyOverlay').classList.remove('open');
+  showToast('Chave Gemini salva ✓');
+}
+
+function closeGeminiKeyModal() {
+  document.getElementById('invGeminiKeyOverlay').classList.remove('open');
 }
 
 // ── Start ─────────────────────────────────────────────────────
