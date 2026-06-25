@@ -11,8 +11,8 @@ function getGeminiKey() { return localStorage.getItem('gemini_api_key') || ''; }
 function setGeminiKey(k) { localStorage.setItem('gemini_api_key', k.trim()); }
 
 async function loadGeminiKey() {
-  if (getGeminiKey()) return; // já tem no dispositivo
   if (!SUPABASE_CONFIGURED) return;
+  // Sempre busca do Supabase — sobrescreve localStorage com a versão mais recente
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/inventario_dados?chave=eq.config_gemini&select=estado`,
