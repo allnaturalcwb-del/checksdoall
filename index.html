@@ -141,21 +141,18 @@
         }));
 
         const isPinDefault = DEFAULT_PINS.includes(admin.pin);
-        if (isPinDefault) {
-          // PIN padrão: troca obrigatória
-          document.getElementById('changePinTitle').textContent = 'Criar acesso pessoal';
-          document.getElementById('changePinSubtitle').textContent =
-            'Antes de entrar, defina seu nome e escolha um PIN pessoal. Isso é obrigatório.';
-          document.getElementById('btnSkipPin').style.display = 'none';
-        } else {
-          // PIN já personalizado: troca opcional
-          document.getElementById('changePinTitle').textContent = `Olá, ${admin.nome}!`;
-          document.getElementById('changePinSubtitle').textContent =
-            'Deseja atualizar seu nome ou PIN? Ou clique em "Agora não" para entrar direto.';
-          document.getElementById('btnSkipPin').style.display = 'block';
+        if (!isPinDefault) {
+          // PIN já personalizado: entra direto
+          doRedirect();
+          return;
         }
 
-        document.getElementById('newNome').value = isPinDefault ? '' : admin.nome;
+        // PIN padrão: troca obrigatória antes de entrar
+        document.getElementById('changePinTitle').textContent = 'Criar acesso pessoal';
+        document.getElementById('changePinSubtitle').textContent =
+          'Antes de entrar, defina seu nome e escolha um PIN pessoal.';
+        document.getElementById('btnSkipPin').style.display = 'none';
+        document.getElementById('newNome').value = '';
         document.getElementById('newPin1').value = '';
         document.getElementById('newPin2').value = '';
         document.getElementById('pinChangeError').textContent = '';
