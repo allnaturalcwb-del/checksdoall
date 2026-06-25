@@ -1765,7 +1765,7 @@ Se não conseguir ler algum campo, use null. Retorne APENAS o JSON, sem texto ad
     'gemini-1.5-flash',
     'gemini-1.5-flash-latest',
   ];
-  const ROOT = 'https://generativelanguage.googleapis.com/v1beta/models/';
+  const ROOT = 'https://generativelanguage.googleapis.com/v1/models/';
 
   // Tenta cada modelo até um responder (não 404)
   let resp, BASE;
