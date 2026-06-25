@@ -71,6 +71,37 @@ body {
 
 .inv-tabs::-webkit-scrollbar { display: none; }
 
+.inv-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f9fafb;
+  border-top: 1px solid var(--border);
+}
+.inv-search-bar .inv-search-icon { font-size: 13px; flex-shrink: 0; }
+.inv-search-bar input {
+  flex: 1;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+  color: var(--text);
+  min-width: 0;
+}
+.inv-search-bar input:focus { outline: none; border-color: var(--red); }
+.inv-search-bar #invSearchClear {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
 .inv-tab {
   flex: 0 0 auto;
   scroll-snap-align: start;
