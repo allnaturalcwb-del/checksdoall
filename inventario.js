@@ -1721,7 +1721,13 @@ function fileToBase64(file) {
   });
 }
 
+function setNFLoadingMsg(msg) {
+  const el = document.querySelector('#nfReviewLoading p');
+  if (el) el.textContent = msg;
+}
+
 async function callGemini(base64Data, mimeType, attempt = 1) {
+  const MAX_ATTEMPTS = 6;
   const prompt = `Você está lendo uma nota fiscal ou cupom fiscal brasileiro. Extraia os dados e retorne APENAS um JSON válido (sem markdown, sem explicação):
 {
   "fornecedor": "nome da empresa emitente",
@@ -1749,8 +1755,11 @@ Se não conseguir ler algum campo, use null. Retorne APENAS o JSON, sem texto ad
   );
 
   if (!resp.ok) {
-    if ((resp.status === 503 || resp.status === 429) && attempt < 3) {
-      await new Promise(r => setTimeout(r, 2000 * attempt));
+    if ((resp.status === 503 || resp.status === 429) && attempt < MAX_ATTEMPTS) {
+      const delay = Math.min(2000 * attempt, 16000); // 2s, 4s, 8s, 16s, 16s
+      setNFLoadingMsg(`Serviço ocupado, aguardando... (tentativa ${attempt}/${MAX_ATTEMPTS - 1})`);
+      await new Promise(r => setTimeout(r, delay));
+      setNFLoadingMsg('Lendo a nota com IA...');
       return callGemini(base64Data, mimeType, attempt + 1);
     }
     const errText = await resp.text();
