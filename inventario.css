@@ -1605,6 +1605,17 @@ body {
 }
 .cmv-nota-del:active { color: #f87171; }
 
+.cmv-nota-edit {
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+.cmv-nota-edit:active { opacity: 1; }
+
 .cmv-panel-notas-vazio {
   padding: 12px 16px;
   font-size: 12px;
