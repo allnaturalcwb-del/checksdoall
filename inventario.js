@@ -1932,8 +1932,10 @@ function renderNFItems() {
         </div>
         <span class="nf-match-badge ${matchBadge}">${matchLabel}</span>
         <select class="nf-item-select" onchange="changeNFMatch(${item.id},this.value)">${opts}</select>
-        <button class="nf-cadastrar-btn" id="nfcad_${item.id}" style="display:${showCadastrar ? 'flex' : 'none'}"
-          onclick="openAddItemFromNF(${item.id},${JSON.stringify(item.descricao)})">
+        <button class="nf-cadastrar-btn" id="nfcad_${item.id}"
+          style="display:${showCadastrar ? 'flex' : 'none'}"
+          data-nf-id="${item.id}" data-nf-desc="${escHtml(item.descricao)}"
+          onclick="openAddItemFromNF(parseInt(this.dataset.nfId), this.dataset.nfDesc)">
           📝 Cadastrar este insumo
         </button>
       </div>
