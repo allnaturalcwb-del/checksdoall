@@ -2095,13 +2095,14 @@ function renderCMVPanel() {
       </div>
     `}
 
+    ${linhaBreakdownHtml}
+
     <div class="cmv-panel-notas-section">
       <button class="cmv-notas-toggle" onclick="toggleNotasDrawer(this)">
         📋 ${notas.length} nota${notas.length !== 1 ? 's' : ''} · R$ ${fmt(total)}
         <span class="cmv-notas-toggle-icon">▾</span>
       </button>
       <div class="cmv-notas-drawer" style="display:none">
-        ${linhaBreakdownHtml}
         <div class="cmv-panel-notas-list">${notasHtml}</div>
       </div>
     </div>
