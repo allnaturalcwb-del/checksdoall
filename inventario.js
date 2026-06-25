@@ -2130,6 +2130,43 @@ async function saveGeminiKey() {
   showToast('Chave Gemini salva ✓');
 }
 
+async function testGeminiKey() {
+  const val = document.getElementById('geminiKeyInput').value.trim();
+  if (!val) { showToast('Cole a chave antes de testar'); return; }
+  const btn = document.getElementById('btnTestGeminiKey');
+  btn.textContent = '⏳ Testando...';
+  btn.disabled = true;
+
+  const BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
+  const body = JSON.stringify({ contents:[{ parts:[{ text:'Responda apenas: OK' }] }] });
+
+  let resp, label;
+  try {
+    resp = await fetch(BASE, { method:'POST', headers:{ 'Content-Type':'application/json', 'x-goog-api-key': val }, body });
+    label = 'x-goog-api-key';
+    if (resp.status === 401) {
+      resp = await fetch(`${BASE}?key=${encodeURIComponent(val)}`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body });
+      label = '?key=';
+    }
+    if (resp.status === 401) {
+      resp = await fetch(BASE, { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${val}` }, body });
+      label = 'Bearer';
+    }
+    const text = await resp.text();
+    if (resp.ok) {
+      showToast(`✅ Chave OK (${label})`);
+    } else {
+      const d = document.getElementById('geminiKeyTestResult');
+      d.textContent = `${resp.status} via ${label}: ${text.slice(0,300)}`;
+      d.style.display = 'block';
+    }
+  } catch(e) {
+    showToast('Erro de rede: ' + e.message);
+  }
+  btn.textContent = '🔍 Testar chave';
+  btn.disabled = false;
+}
+
 function toggleNotasDrawer(btn) {
   const drawer = btn.nextElementSibling;
   const open   = drawer.style.display !== 'none';
