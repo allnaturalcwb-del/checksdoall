@@ -1867,6 +1867,8 @@ function renderNFItems() {
   const list = document.getElementById('nfItemsList');
   if (!list) return;
 
+  const q = (document.getElementById('nfItemSearch')?.value || '').toLowerCase().trim();
+
   const allItems = [];
   for (const section of SECTIONS) {
     if (section.key === 'CMV' || section.key === 'RESUMO') continue;
@@ -1876,7 +1878,11 @@ function renderNFItems() {
   }
   allItems.sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
 
-  list.innerHTML = nfExtractedItems.map(item => {
+  const visible = q
+    ? nfExtractedItems.filter(i => i.descricao.toLowerCase().includes(q))
+    : nfExtractedItems;
+
+  list.innerHTML = visible.map(item => {
     const matchVal  = item.match ? `${item.match.sectionKey}::${item.match.itemName}` : '';
     const matchBadge = item.match
       ? (item.match.score === 1.0 ? 'nf-match-saved' : 'nf-match-auto')
@@ -1892,6 +1898,8 @@ function renderNFItems() {
         return `<option value="${escHtml(v)}"${sel}>${escHtml(i.label)}</option>`;
       }).join('');
 
+    const showCadastrar = !matchVal;
+
     return `<div class="nf-item${item.incluir ? '' : ' nf-item-off'}" id="nfitem_${item.id}">
       <input class="nf-item-chk" type="checkbox" ${item.incluir ? 'checked' : ''} onchange="toggleNFItem(${item.id},this.checked)">
       <div class="nf-item-body">
@@ -1899,9 +1907,13 @@ function renderNFItems() {
         <div class="nf-item-meta">Qtd: ${item.quantidade} ${item.unidade} · R$&nbsp;${fmt(item.preco_unitario)}/un · Total: R$&nbsp;${fmt(item.preco_total)}</div>
         <span class="nf-match-badge ${matchBadge}">${matchLabel}</span>
         <select class="nf-item-select" onchange="changeNFMatch(${item.id},this.value)">${opts}</select>
+        <button class="nf-cadastrar-btn" id="nfcad_${item.id}" style="display:${showCadastrar ? 'flex' : 'none'}"
+          onclick="openAddItemFromNF(${item.id},${JSON.stringify(item.descricao)})">
+          📝 Cadastrar este insumo
+        </button>
       </div>
     </div>`;
-  }).join('') || '<p style="color:#999;text-align:center;padding:16px">Nenhum item identificado</p>';
+  }).join('') || '<p style="color:#999;text-align:center;padding:16px">Nenhum item encontrado</p>';
 
   updateNFTotal();
 }
@@ -1932,6 +1944,81 @@ function changeNFMatch(id, value) {
     badge.textContent = item.match ? `[${item.match.sectionKey}] ${item.match.itemName}` : 'Não identificado — selecione abaixo';
     badge.className   = 'nf-match-badge ' + (item.match ? 'nf-match-auto' : 'nf-match-none');
   }
+  const cadBtn = document.getElementById(`nfcad_${id}`);
+  if (cadBtn) cadBtn.style.display = value ? 'none' : 'flex';
+}
+
+function openAddItemFromNF(itemId, desc) {
+  const sectionEl = document.getElementById('nfAddItemSection');
+  const groupEl   = document.getElementById('nfAddItemGroup');
+  const nameEl    = document.getElementById('nfAddItemName');
+  const unitEl    = document.getElementById('nfAddItemUnit');
+
+  sectionEl.innerHTML = SECTIONS
+    .filter(s => s.key !== 'CMV' && s.key !== 'RESUMO')
+    .map(s => `<option value="${escHtml(s.key)}">${escHtml(s.label)}</option>`)
+    .join('');
+
+  nameEl.value = desc;
+  unitEl.value = '';
+  updateNFAddGroups();
+
+  document.getElementById('nfAddItemId').value = itemId;
+  document.getElementById('invNFAddItemOverlay').classList.add('open');
+  setTimeout(() => nameEl.focus(), 100);
+}
+
+function updateNFAddGroups() {
+  const sectionKey = document.getElementById('nfAddItemSection').value;
+  const section    = SECTIONS.find(s => s.key === sectionKey);
+  document.getElementById('nfAddItemGroup').innerHTML =
+    (section?.groups || []).map(g => `<option value="${escHtml(g.group)}">${escHtml(g.group)}</option>`).join('');
+}
+
+function saveNFAddItem() {
+  const nameEl     = document.getElementById('nfAddItemName');
+  const unitEl     = document.getElementById('nfAddItemUnit');
+  const sectionKey = document.getElementById('nfAddItemSection').value;
+  const groupName  = document.getElementById('nfAddItemGroup').value;
+  const name       = nameEl.value.trim();
+  const unit       = unitEl.value.trim() || 'un';
+  const itemId     = parseInt(document.getElementById('nfAddItemId').value);
+
+  if (!name) { nameEl.classList.add('error'); return; }
+
+  if (!unitConfig.added[sectionKey]) unitConfig.added[sectionKey] = [];
+  if (!unitConfig.added[sectionKey].find(i => i.name === name)) {
+    if (unitConfig.deleted[sectionKey])
+      unitConfig.deleted[sectionKey] = unitConfig.deleted[sectionKey].filter(n => n !== name);
+    unitConfig.added[sectionKey].push({ group: groupName, name, unit });
+    saveUnitConfig();
+    rebuildSections();
+  }
+
+  // Auto-seleciona o item recém-criado no NF item
+  const item = nfExtractedItems.find(i => i.id === itemId);
+  if (item) {
+    item.match = { sectionKey, itemName: name };
+    mapeamentos[normalizeForMatch(item.descricao)] = { sectionKey, itemName: name };
+    const sel = document.querySelector(`#nfitem_${itemId} .nf-item-select`);
+    if (sel) {
+      const val = `${sectionKey}::${name}`;
+      const opt = document.createElement('option');
+      opt.value = val; opt.textContent = `[${sectionKey}] ${name}`; opt.selected = true;
+      sel.appendChild(opt);
+      const badge = document.querySelector(`#nfitem_${itemId} .nf-match-badge`);
+      if (badge) { badge.textContent = `[${sectionKey}] ${name}`; badge.className = 'nf-match-badge nf-match-auto'; }
+      const cadBtn = document.getElementById(`nfcad_${itemId}`);
+      if (cadBtn) cadBtn.style.display = 'none';
+    }
+  }
+
+  document.getElementById('invNFAddItemOverlay').classList.remove('open');
+  showToast('Insumo cadastrado ✓');
+}
+
+function closeNFAddItem() {
+  document.getElementById('invNFAddItemOverlay').classList.remove('open');
 }
 
 function updateNFTotal() {
