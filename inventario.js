@@ -1897,7 +1897,7 @@ function showNFReview(geminiData) {
   const fornEl = document.getElementById('nfRevFornecedor');
   const dataEl = document.getElementById('nfRevData');
   if (fornEl) fornEl.value = geminiData.fornecedor || '';
-  populateLinhaSelect('nfRevLinha', geminiData.fornecedor || '');
+  populateLinhaSelect('nfRevLinha', geminiData.fornecedor || '', geminiData.itens || []);
   if (dataEl && geminiData.data) {
     const p = geminiData.data.split('/');
     if (p.length === 3) dataEl.value = `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
@@ -2393,17 +2393,28 @@ async function saveLinhas() {
   });
 }
 
-function populateLinhaSelect(selectId, fornecedor = '') {
-  const sel = document.getElementById(selectId);
-  if (!sel) return;
-  sel.innerHTML = linhasConfig.linhas.map(l =>
-    `<option value="${escHtml(l)}">${escHtml(l)}</option>`
-  ).join('');
-  // Auto-fill se fornecedor conhecido
+function detectLinhaFromItems(items, fornecedor) {
+  // 1. Fornecedor já mapeado
   if (fornecedor) {
     const known = linhasConfig.fornecedores[fornecedor.trim().toLowerCase()];
-    if (known) sel.value = known;
+    if (known) return known;
   }
+  // 2. Palavras-chave dos nomes das linhas nos itens da nota
+  const allText = (items || []).map(i => i.descricao || '').join(' ').toLowerCase();
+  for (const linha of linhasConfig.linhas) {
+    const keywords = linha.toLowerCase().replace(/[^a-záéíóúàâêôãõç\s]/gi, '').split(/\s+/).filter(w => w.length > 3);
+    if (keywords.some(kw => allText.includes(kw))) return linha;
+  }
+  return null;
+}
+
+function populateLinhaSelect(selectId, fornecedor = '', items = []) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = `<option value="">— Selecionar linha —</option>` +
+    linhasConfig.linhas.map(l => `<option value="${escHtml(l)}">${escHtml(l)}</option>`).join('');
+  const detected = detectLinhaFromItems(items, fornecedor);
+  if (detected) sel.value = detected;
 }
 
 function autoFillLinha(selectId, fornecedor) {
