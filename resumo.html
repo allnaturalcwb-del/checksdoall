@@ -119,8 +119,6 @@
   </div>
 
   <main class="r-main">
-    <div id="summaryBlock"></div>
-    <p class="r-section">Por Unidade</p>
     <div id="unitsBlock">
       <p style="color:#94a3b8;text-align:center;padding:32px 0">Carregando...</p>
     </div>
@@ -210,7 +208,7 @@
         <div class="r-monthly">
           <div class="r-monthly-left">
             <div class="r-monthly-label">CMV Mensal</div>
-            <div class="r-monthly-sub">${m.monthCount} sem. · Fat. ${fmtR(m.monthFat)} · Gasto ${fmtR(m.monthGasto)}</div>
+            <div class="r-monthly-sub">${m.monthCount} sem. com faturamento · Gasto ${fmtR(m.monthGasto)}</div>
           </div>
           <div class="r-monthly-nums">
             <span class="r-monthly-real" style="color:${monthColor}">${m.monthReal.toFixed(1)}%</span>
@@ -233,7 +231,6 @@
             <div class="r-week-info">
               <span class="r-week-name">Sem. ${wk.w}</span>
               <div class="r-week-stats">
-                <span class="r-week-stat">Fat. <strong>${fmtR(wk.fat)}</strong></span>
                 <span class="r-week-stat">Gasto <strong>${fmtR(wk.gasto)}</strong></span>
                 <span class="r-week-stat">CMV <strong style="color:${col}">${wk.real.toFixed(1)}%</strong> <span style="color:#94a3b8">/ ${wk.meta}%</span></span>
               </div>
