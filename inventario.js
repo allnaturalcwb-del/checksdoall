@@ -1943,6 +1943,26 @@ function findBestMatch(description) {
   return bestScore >= 0.35 ? bestMatch : null;
 }
 
+function openNFManual() {
+  showNFReview({ fornecedor: '', data: '', itens: [] });
+  // Adiciona uma linha em branco para começar
+  addNFManualItem();
+}
+
+function addNFManualItem() {
+  const idx = nfExtractedItems.length;
+  nfExtractedItems.push({
+    id: idx, descricao: '', quantidade: 1, unidade: 'UN',
+    preco_unitario: 0, preco_total: 0, match: null, incluir: true
+  });
+  renderNFItems();
+  // Foca na descrição do novo item
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('.nf-item-desc-input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }, 50);
+}
+
 function showNFReview(geminiData) {
   document.getElementById('nfReviewLoading').style.display = 'none';
   document.getElementById('nfReviewContent').style.display = 'block';
@@ -2274,6 +2294,7 @@ function renderCMVPanel() {
       <button class="cmv-panel-btn-foto" onclick="openCameraForNF()" title="${geminiOk ? 'Tirar foto de NF' : 'Configure a chave Gemini primeiro'}">
         📷 Foto NF${geminiOk ? '' : ' ⚠'}
       </button>
+      <button class="cmv-panel-btn-cfg" onclick="openNFManual()" title="Inserir nota manualmente com itens">📝 Manual</button>
       ${IS_ADMIN ? `<button class="cmv-panel-btn-cfg" onclick="openCMVConfig()">⚙ CMV</button>` : ''}
       ${IS_ADMIN ? `<button class="cmv-panel-btn-cfg" onclick="openLinhas()" title="Gerenciar linhas de produto">📦 Linhas</button>` : ''}
       ${IS_ADMIN ? `<button class="cmv-panel-btn-cfg" onclick="openGeminiKeyModal()" title="Configurar chave Gemini">🔑 IA</button>` : ''}
