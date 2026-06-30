@@ -8,7 +8,7 @@
   <title>Controles Estoque</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="inventario.css?v=3">
+  <link rel="stylesheet" href="inventario.css?v=4">
 </head>
 <body>
 
@@ -22,9 +22,6 @@
         <button id="invLogoutBtn" class="inv-logout-btn-hdr" style="display:none" onclick="logout()">Sair</button>
       </div>
     </div>
-
-    <!-- Painel CMV (sempre visível, dentro do header) -->
-    <div id="cmvPanel" class="cmv-top-panel"></div>
 
     <!-- Seletor de semana (dentro do header) -->
     <div class="inv-week-bar-inner">
@@ -70,9 +67,28 @@
     </div>
   </div>
 
-  <!-- Sections -->
+  <!-- Views container -->
   <main class="inv-sections" id="invSections">
-    <!-- sections injected by JS -->
+    <!-- Dashboard view -->
+    <div class="inv-view" id="view-dashboard">
+      <div id="dashboardContent"></div>
+    </div>
+
+    <!-- Contagem view: existing sections injected by JS go here -->
+    <div class="inv-view" id="view-contagem" style="display:none">
+      <!-- sections injected by JS -->
+    </div>
+
+    <!-- CMV view -->
+    <div class="inv-view" id="view-cmv" style="display:none">
+      <div id="cmvPanel" class="cmv-top-panel"></div>
+      <div id="cmvViewContent"></div>
+    </div>
+
+    <!-- Config view -->
+    <div class="inv-view" id="view-config" style="display:none">
+      <div id="configViewContent"></div>
+    </div>
   </main>
 
   <!-- Toast -->
@@ -305,6 +321,26 @@
     </div>
   </div>
 
-  <script src="inventario.js?v=3"></script>
+  <!-- Bottom Navigation Bar -->
+  <nav class="app-bottom-nav" id="appBottomNav">
+    <button class="app-nav-item active" data-view="dashboard" onclick="switchView('dashboard')">
+      <span class="app-nav-icon">🏠</span>
+      <span class="app-nav-label">Dashboard</span>
+    </button>
+    <button class="app-nav-item" data-view="contagem" onclick="switchView('contagem')">
+      <span class="app-nav-icon">📦</span>
+      <span class="app-nav-label">Contagem</span>
+    </button>
+    <button class="app-nav-item" data-view="cmv" onclick="switchView('cmv')">
+      <span class="app-nav-icon">📊</span>
+      <span class="app-nav-label">CMV</span>
+    </button>
+    <button class="app-nav-item" data-view="config" onclick="switchView('config')">
+      <span class="app-nav-icon">⚙️</span>
+      <span class="app-nav-label">Config</span>
+    </button>
+  </nav>
+
+  <script src="inventario.js?v=4"></script>
 </body>
 </html>
