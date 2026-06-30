@@ -174,13 +174,12 @@ body {
 }
 
 .inv-week-month-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--muted);
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
   white-space: nowrap;
-  flex-shrink: 0;
-  padding-right: 4px;
-  text-transform: capitalize;
 }
 
 .inv-week-btn {
@@ -205,6 +204,23 @@ body {
   border-color: var(--red);
   color: #fff;
 }
+
+.inv-week-nav-btn {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.inv-week-nav-btn:active { background: rgba(255,255,255,0.25); }
 
 /* ── Section Content ─────────────────────────────────────────── */
 .inv-sections { padding: 16px; }
