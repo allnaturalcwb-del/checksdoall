@@ -8,7 +8,7 @@
   <title>Controles Estoque</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="inventario.css?v=5">
+  <link rel="stylesheet" href="inventario.css?v=6">
 </head>
 <body>
 
@@ -25,11 +25,9 @@
 
     <!-- Seletor de semana (dentro do header) -->
     <div class="inv-week-bar-inner">
+      <button class="inv-week-nav-btn" onclick="prevWeek()">‹</button>
       <span id="invWeekLabel" class="inv-week-month-label"></span>
-      <button class="inv-week-btn active" data-week="1" onclick="switchWeek(1)">Sem 1</button>
-      <button class="inv-week-btn" data-week="2" onclick="switchWeek(2)">Sem 2</button>
-      <button class="inv-week-btn" data-week="3" onclick="switchWeek(3)">Sem 3</button>
-      <button class="inv-week-btn" data-week="4" onclick="switchWeek(4)">Sem 4</button>
+      <button class="inv-week-nav-btn" onclick="nextWeek()">›</button>
     </div>
 
     <nav class="inv-tabs" id="invTabs">
@@ -341,6 +339,6 @@
     </button>
   </nav>
 
-  <script src="inventario.js?v=5"></script>
+  <script src="inventario.js?v=6"></script>
 </body>
 </html>
