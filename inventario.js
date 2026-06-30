@@ -577,12 +577,136 @@ async function init() {
 
   buildTabs();
   buildSections();
-  renderCMVPanel();
-  switchTab(SECTIONS.find(s => s.key !== 'CMV').key);
   updateAllBadges();
   updateWeekButtons();
   await loadFromCloud();
-  renderCMVPanel();
+  switchView('dashboard');
+}
+
+// ── Views (bottom nav) ────────────────────────────────────────
+
+function switchView(view) {
+  document.querySelectorAll('.app-nav-item').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.view === view));
+
+  ['dashboard','contagem','cmv','config'].forEach(v => {
+    const el = document.getElementById('view-' + v);
+    if (el) el.style.display = v === view ? '' : 'none';
+  });
+
+  // Tabs de seção e barra de pesquisa só na contagem
+  const invTabs   = document.getElementById('invTabs');
+  const searchBar = document.querySelector('.inv-search-bar');
+  if (invTabs)   invTabs.style.display   = view === 'contagem' ? '' : 'none';
+  if (searchBar) searchBar.style.display = view === 'contagem' ? '' : 'none';
+
+  if (view === 'dashboard') renderDashboard();
+  if (view === 'cmv')       renderCMVPanel();
+  if (view === 'config')    renderConfigView();
+}
+
+function renderDashboard() {
+  const el = document.getElementById('dashboardContent');
+  if (!el) return;
+
+  const d     = getCMVData();
+  const fat   = d.faturamento;
+  const notas = d.notas || [];
+  const total = notas.reduce((s, n) => s + (n.valor || 0), 0);
+  const pct   = d.meta_pct || 30;
+  const cmvReal = fat > 0 ? total / fat * 100 : null;
+  const meta    = fat ? fat * pct / 100 : null;
+  const saldo   = meta !== null ? meta - total : null;
+  const barColor = cmvReal == null ? '#9ca3af'
+    : cmvReal > pct * 1.1 ? '#ef4444'
+    : cmvReal > pct       ? '#f59e0b' : '#22c55e';
+
+  let gastoYTD = 0, fatYTD = 0;
+  for (let w = 1; w <= 4; w++) {
+    const dw = (state.cmv || {})['semana_' + w];
+    if (!dw) continue;
+    gastoYTD += (dw.notas || []).reduce((s, n) => s + (n.valor || 0), 0);
+    if (dw.faturamento > 0) fatYTD += dw.faturamento;
+  }
+  const cmvYTD  = fatYTD > 0 ? gastoYTD / fatYTD * 100 : null;
+  const ytdColor = cmvYTD == null ? '#9ca3af'
+    : cmvYTD > pct * 1.1 ? '#ef4444'
+    : cmvYTD > pct       ? '#f59e0b' : '#22c55e';
+
+  const allNotas = [1,2,3,4].flatMap(w => ((state.cmv||{})['semana_'+w]?.notas || []));
+  const lastNota = allNotas.length
+    ? allNotas[allNotas.length - 1].data || '—' : '—';
+  const lastCount = state.lastCountDate
+    ? new Date(state.lastCountDate).toLocaleDateString('pt-BR') : '—';
+
+  el.innerHTML = `
+    <div class="dash-header">
+      <div class="dash-unit">${UNIT_NAME}</div>
+      <div class="dash-week">Semana ${state.semana}</div>
+    </div>
+    <div class="dash-kpis">
+      <div class="dash-kpi">
+        <span class="dash-kpi-label">CMV semana</span>
+        <span class="dash-kpi-val" style="color:${barColor}">${cmvReal != null ? cmvReal.toFixed(1) + '%' : '—'}</span>
+        <span class="dash-kpi-sub">meta ${pct}%</span>
+      </div>
+      <div class="dash-kpi">
+        <span class="dash-kpi-label">CMV mês</span>
+        <span class="dash-kpi-val" style="color:${ytdColor}">${cmvYTD != null ? cmvYTD.toFixed(1) + '%' : '—'}</span>
+        <span class="dash-kpi-sub">R$ ${fmt(gastoYTD)}</span>
+      </div>
+    </div>
+    <div class="dash-metrics">
+      <div class="dash-metric">
+        <span class="dash-metric-label">Gasto semana</span>
+        <span class="dash-metric-val">R$ ${fmt(total)}</span>
+      </div>
+      <div class="dash-metric">
+        <span class="dash-metric-label">Faturamento</span>
+        <span class="dash-metric-val">${fat ? 'R$ ' + fmt(fat) : '—'}</span>
+      </div>
+      <div class="dash-metric">
+        <span class="dash-metric-label">${saldo != null ? (saldo >= 0 ? 'Saldo' : 'Excesso') : 'Meta gasto'}</span>
+        <span class="dash-metric-val" style="color:${saldo != null ? (saldo >= 0 ? '#16a34a' : '#dc2626') : 'inherit'}">
+          ${saldo != null ? (saldo >= 0 ? '' : '−') + 'R$ ' + fmt(Math.abs(saldo)) : meta ? 'R$ ' + fmt(meta) : '—'}
+        </span>
+      </div>
+      <div class="dash-metric">
+        <span class="dash-metric-label">Última nota</span>
+        <span class="dash-metric-val">${lastNota}</span>
+      </div>
+      <div class="dash-metric">
+        <span class="dash-metric-label">Última contagem</span>
+        <span class="dash-metric-val">${lastCount}</span>
+      </div>
+      <div class="dash-metric dash-metric-action" onclick="switchView('cmv')">
+        <span class="dash-metric-label">Notas semana</span>
+        <span class="dash-metric-val">${notas.length} nota${notas.length !== 1 ? 's' : ''} →</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderConfigView() {
+  const el = document.getElementById('configViewContent');
+  if (!el) return;
+  if (!IS_ADMIN) {
+    el.innerHTML = '<p style="padding:40px 24px;text-align:center;color:#9ca3af;font-size:15px">Apenas administradores têm acesso às configurações.</p>';
+    return;
+  }
+  el.innerHTML = `
+    <div class="config-view">
+      <div class="config-section-title">Conta</div>
+      <button class="config-btn" onclick="openTrocarPin()">👤 Trocar meu PIN</button>
+      <div class="config-section-title" style="margin-top:20px">CMV</div>
+      <button class="config-btn" onclick="openCMVConfig()">⚙️ Faturamento e Meta CMV</button>
+      <button class="config-btn" onclick="openLinhas()">📦 Linhas de produto</button>
+      <div class="config-section-title" style="margin-top:20px">Integrações</div>
+      <button class="config-btn" onclick="openGeminiKeyModal()">🔑 Chave Gemini (IA)</button>
+      <div class="config-section-title" style="margin-top:20px"></div>
+      <button class="config-btn config-btn-danger" onclick="logout()">↩ Sair</button>
+    </div>
+  `;
 }
 
 // ── Persistência ──────────────────────────────────────────────
@@ -633,7 +757,7 @@ function buildTabs() {
 
 // ── Construção de seções ──────────────────────────────────────
 function buildSections() {
-  const main = document.getElementById('invSections');
+  const main = document.getElementById('view-contagem');
   let html = '';
 
   for (const section of SECTIONS) {
@@ -948,13 +1072,13 @@ function filterInventory(q) {
   const clearBtn = document.getElementById('invSearchClear');
   if (clearBtn) clearBtn.style.display = query ? 'block' : 'none';
 
-  document.querySelectorAll('#invSections .inv-item').forEach(card => {
+  document.querySelectorAll('#view-contagem .inv-item').forEach(card => {
     const name = (card.querySelector('.inv-item-name')?.textContent || '').toLowerCase();
     card.style.display = (!query || name.includes(query)) ? '' : 'none';
   });
 
   // Mostra/esconde títulos de grupo sem itens visíveis
-  document.querySelectorAll('#invSections .inv-section').forEach(sec => {
+  document.querySelectorAll('#view-contagem .inv-section').forEach(sec => {
     sec.querySelectorAll('.inv-section-title').forEach(title => {
       if (!query) { title.style.display = ''; return; }
       let sib = title.nextElementSibling;
@@ -969,7 +1093,7 @@ function filterInventory(q) {
 
   // Se pesquisando, mostra todas as sections; se não, volta à tab ativa
   if (query) {
-    document.querySelectorAll('.inv-section').forEach(s => {
+    document.querySelectorAll('#view-contagem .inv-section').forEach(s => {
       if (s.id !== 'sec_CMV' && s.id !== 'sec_RESUMO') s.classList.add('active');
     });
   } else {
@@ -1010,6 +1134,8 @@ function switchWeek(w) {
   restoreValues();
   updateAllBadges();
   renderCMVPanel();
+  const dash = document.getElementById('view-dashboard');
+  if (dash && dash.style.display !== 'none') renderDashboard();
 }
 
 function updateWeekButtons() {
